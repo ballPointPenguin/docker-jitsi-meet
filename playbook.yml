@@ -1,7 +1,8 @@
 ---
 - name: web application deploy
-  hosts: west
-  remote_user: hank
+  gather_facts: no
+  hosts: "{{ REMOTE_HOSTS }}"
+  remote_user: "{{ REMOTE_USER }}"
   vars:
     branch: "daddy"
     homedir: "/home/{{ user }}"
@@ -36,7 +37,7 @@
         image: jitsi/web:latest
         name: jitsi-web
         networks_cli_compatible: yes
-        recreate: yes
+        # recreate: yes
         restart: yes
         restart_policy: unless-stopped
         env:
@@ -125,17 +126,17 @@
           - "{{ workdir }}/config/web/letsencrypt:/etc/letsencrypt:Z"
           - "{{ workdir }}/config/transcripts:/usr/share/jitsi-meet/transcripts:Z"
         networks:
+          - name: bridge
           - name: meet.jitsi
             aliases:
               - "{{ XMPP_DOMAIN }}"
-          - name: bridge
 
     - name: run xmpp container
       docker_container:
         image: jitsi/prosody:latest
         name: jitsi-prosody
         networks_cli_compatible: yes
-        recreate: yes
+        # recreate: yes
         restart: yes
         restart_policy: unless-stopped
         env:
@@ -207,7 +208,7 @@
         image: jitsi/jicofo:latest
         name: jitsi-jicofo
         networks_cli_compatible: yes
-        recreate: yes
+        # recreate: yes
         restart: yes
         restart_policy: unless-stopped
         env:
@@ -240,7 +241,7 @@
         image: jitsi/jvb:latest
         name: jitsi-jvb
         networks_cli_compatible: yes
-        recreate: yes
+        # recreate: yes
         restart: yes
         restart_policy: unless-stopped
         env:
@@ -276,29 +277,46 @@
         image: jitsi/etherpad:latest
         name: jitsi-etherpad
         networks_cli_compatible: yes
-        recreate: yes
+        # recreate: yes
         restart: yes
         restart_policy: unless-stopped
+        env:
+          VIRTUAL_HOST: "etherpad.benrosas.com"
+          VIRTUAL_PORT: "9001"
+          LETSENCRYPT_HOST: "etherpad.benrosas.com"
         networks:
+          - name: bridge
           - name: meet.jitsi
             aliases:
               - etherpad.meet.jitsi
+      tags:
+        - etherpad
+
+    # USERS
 
     - name: list users
       shell: docker exec jitsi-prosody find /config/data/meet%2ejitsi/accounts -type f -exec \
         basename {} .dat \;
       ignore_errors: yes
       register: jitsi_users
+      tags:
+        - users
 
     - name: register admin user
       shell: echo {{ ADMIN_USERNAME }}
       register: admin_username
+      tags:
+        - users
 
     - name: debug jitsi_users
       debug:
         var: jitsi_users
+      tags:
+        - users
 
     - name: create admin user
       shell: "docker exec jitsi-prosody prosodyctl --config /config/prosody.cfg.lua register \
         {{ ADMIN_USERNAME }} meet.jitsi {{ ADMIN_PASSWORD }}"
-      when: jitsi_users.stdout.find(admin_username.stdout) != -1
+      when: jitsi_users.failed or jitsi_users.stdout.find(admin_username.stdout) != -1
+      tags:
+        - users
