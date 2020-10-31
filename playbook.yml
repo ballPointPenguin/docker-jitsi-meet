@@ -4,7 +4,6 @@
   remote_user: hank
   vars:
     branch: "daddy"
-    domains: "meet.benrosas.com"
     homedir: "/home/{{ user }}"
     org: ballPointPenguin
     repo: docker-jitsi-meet
@@ -37,12 +36,12 @@
         image: jitsi/web:latest
         name: jitsi-web
         networks_cli_compatible: yes
-        # recreate: yes
-        # restart: yes
+        recreate: yes
+        restart: yes
         restart_policy: unless-stopped
         env:
-          LETSENCRYPT_HOST: "{{ domains }}"
-          VIRTUAL_HOST: "{{ domains }}"
+          LETSENCRYPT_HOST: "{{ VIRTUAL_HOST }}"
+          VIRTUAL_HOST: "{{ VIRTUAL_HOST }}"
           ENABLE_LETSENCRYPT: "{{ ENABLE_LETSENCRYPT }}"
           ENABLE_HTTP_REDIRECT: "{{ ENABLE_HTTP_REDIRECT }}"
           # ENABLE_XMPP_WEBSOCKET: "{{ ENABLE_XMPP_WEBSOCKET }}"
@@ -136,8 +135,8 @@
         image: jitsi/prosody:latest
         name: jitsi-prosody
         networks_cli_compatible: yes
-        # recreate: yes
-        # restart: yes
+        recreate: yes
+        restart: yes
         restart_policy: unless-stopped
         env:
           AUTH_TYPE: "{{ AUTH_TYPE }}"
@@ -208,8 +207,8 @@
         image: jitsi/jicofo:latest
         name: jitsi-jicofo
         networks_cli_compatible: yes
-        # recreate: yes
-        # restart: yes
+        recreate: yes
+        restart: yes
         restart_policy: unless-stopped
         env:
           AUTH_TYPE: "{{ AUTH_TYPE }}"
@@ -241,8 +240,8 @@
         image: jitsi/jvb:latest
         name: jitsi-jvb
         networks_cli_compatible: yes
-        # recreate: yes
-        # restart: yes
+        recreate: yes
+        restart: yes
         restart_policy: unless-stopped
         env:
           DOCKER_HOST_ADDRESS: "{{ DOCKER_HOST_ADDRESS }}"
@@ -277,6 +276,8 @@
         image: jitsi/etherpad:latest
         name: jitsi-etherpad
         networks_cli_compatible: yes
+        recreate: yes
+        restart: yes
         restart_policy: unless-stopped
         networks:
           - name: meet.jitsi
